@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Real-time Orders</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <h2> Real-time Order Updates</h2>
+  <ul id="updates"></ul>
+
+  <script>
+    const socket = io("http://localhost:5000");
+
+    socket.on("orderCreated", (data) => {
+      const li = document.createElement("li");
+      const mainData = data.fullDocument; 
+
+      li.innerHTML =`
+       <strong>Order Created</strong><br> 
+        <strong>Customer Name:</strong> ${mainData.customerName}<br>
+        <strong>Product Name:</strong> ${mainData.productName}<br>
+        <strong>Status:</strong> ${mainData.status}<br>
+        <strong>Created At:</strong> ${new Date(mainData.createdAt).toLocaleString()}<br><br>
+      `;
+      document.getElementById("updates").appendChild(li);
+    });
+
+    //updation
+     socket.on("orderUpdated", (data) => {
+     const updatedFields = data.updateDescription.updatedFields;
+     const id = data.documentKey._id; // The order's ID
+
+    const li = document.createElement("li");
+
+    let updates = "";
+    for (const [field, value] of Object.entries(updatedFields)) {
+    let displayValue = value;
+
+    // Safely check if it's a valid date string
+    const parsedDate = new Date(value);
+    if (!isNaN(parsedDate)) {
+      displayValue = parsedDate.toLocaleString(); 
+    }
+
+    updates += `<strong>${field}:</strong> ${displayValue}<br>`;
+  }
+
+    li.innerHTML = `
+    <strong>Order Updated</strong><br> 
+    <strong>ID: ${id}</strong><br> 
+    ${updates}<br>
+    `;
+
+  document.getElementById("updates").appendChild(li);
+    });
+
+    // deletion
+   socket.on("orderDeleted",(data) =>{
+    const li = document.createElement("li");
+    li.innerHTML = `
+    <strong>Order Deleted</strong><br>
+    Order ID : ${data.documentKey._id}<br>
+    <strong>Deleted At:</strong> ${new Date(data.wallTime).toLocaleString()}<br><br>
+    `;
+    document.getElementById("updates").appendChild(li);
+   });
+    
+  </script>
+</body>
+</html>
